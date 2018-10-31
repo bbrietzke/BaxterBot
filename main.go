@@ -25,7 +25,7 @@
 
 package main
 
-import "github.com/bbrietzke/BaxterBotI/cmd"
+import "github.com/bbrietzke/BaxterBot/cmd"
 
 func main() {
 	cmd.Execute()
