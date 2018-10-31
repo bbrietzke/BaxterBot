@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bbrietzke/BaxterBot/pkg/web"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,7 +38,7 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "BaxterBotI",
+	Use:   "BaxterBot",
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -45,7 +46,9 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {},
+	Run: func(cmd *cobra.Command, args []string) {
+		web.Start()
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

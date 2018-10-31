@@ -1,0 +1,14 @@
+digraph baxter_bot {
+    layout=dot
+    rankdir=LR
+
+    R_LD [label="Leader" shape=doublecircle]
+    R_ON [label="Member" shape=circle]
+    R_TW [label="Member" shape=circle]
+
+    subgraph cluster_raft {
+        label="Raft Network"
+        R_LD->R_ON
+        R_LD->R_TW
+    }
+}
