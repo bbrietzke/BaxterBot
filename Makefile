@@ -33,7 +33,7 @@ test-template:
 	$(GO_TEST) github.com/bbrietzke/BaxterBot/*
 
 build-pi: $(BINDIR)
-	GOOS=linux GOARCH=arm GOARM=5 $(GO_BUILD) -o $(GOBIN)/$(GOOS)/BaxterBot
+	GOOS=linux GOARCH=arm GOARM=5 $(GO_BUILD) -o $(BINDIR)/pi/BaxterBot
 
 
 BIN := /usr/local/bin

@@ -8,6 +8,7 @@
 *.out
 /vendor/
 /Godeps/
+/bin/
 
 .DS_Store
 .AppleDouble
