@@ -28,7 +28,9 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 
+	"github.com/bbrietzke/BaxterBot/pkg/web"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,7 +39,7 @@ import (
 var cfgFile string
 
 var rootCmd = &cobra.Command{
-	Use:   "BaxterBotI",
+	Use:   "BaxterBot",
 	Short: "A brief description of your application",
 	Long: `A longer description that spans multiple lines and likely contains
 examples and usage of using your application. For example:
@@ -45,7 +47,23 @@ examples and usage of using your application. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {},
+	Run: func(cmd *cobra.Command, args []string) {
+		options := []web.Option{}
+
+		if cmd.Flag("rps").Changed {
+			v, _ := strconv.ParseInt(cmd.Flag("rps").Value.String(), 10, 64)
+			options = append(options, web.RequestsPerSecond(v))
+		}
+
+		if cmd.Flag("wait").Changed {
+			v, _ := strconv.ParseBool(cmd.Flag("wait").Value.String())
+			if v {
+				options = append(options, web.Wait())
+			}
+		}
+
+		web.Start(options...)
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -60,7 +78,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.baxter_bot.yaml)")
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().Bool("wait", false, "use wait protocol for rate limiting")
+	rootCmd.Flags().Int64("rps", 10, "requests per second")
 }
 
 // initConfig reads in config file and ENV variables if set.
