@@ -56,8 +56,7 @@ to quickly create a Cobra application.`,
 		}
 
 		if cmd.Flag("wait").Changed {
-			v, _ := strconv.ParseBool(cmd.Flag("wait").Value.String())
-			if v {
+			if v, _ := strconv.ParseBool(cmd.Flag("wait").Value.String()); v {
 				options = append(options, web.Wait())
 			}
 		}
