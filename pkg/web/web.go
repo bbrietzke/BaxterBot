@@ -6,25 +6,29 @@ import (
 	"os"
 	"time"
 
+	"golang.org/x/time/rate"
+
 	"github.com/hashicorp/golang-lru"
 
 	"github.com/gorilla/mux"
 )
 
 const (
-	requestsPerSeconds int64  = 10
-	burstRate          int    = 2
+	requestsPerSeconds int64  = 25
+	burstRate          int    = 5
 	defaultHTTPPort    string = ":8080"
 )
 
 var (
-	logger *log.Logger
-	cache  *lru.Cache
+	logger  *log.Logger
+	cache   *lru.Cache
+	limiter *rate.Limiter
 )
 
 func init() {
 	logger = log.New(os.Stdout, "WEB  ", log.LstdFlags|log.Lshortfile)
 	cache, _ = lru.New(8)
+	limiter = rate.NewLimiter(rate.Limit(1), burstRate)
 }
 
 /*
@@ -37,26 +41,29 @@ Options that can be included are:
 	RequestsPerSecond
 		Sets the rate limiter to only allow a set amount of HTTP requests per second.
 		Automatically sets the Burst to be 10% of the RequestsPerSecond value.
+	Burst
+		Maximum number of incoming requests before rate limiting begins.
 */
 func Start(options ...Option) error {
 	router := mux.NewRouter()
-	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Burst: burstRate}
+	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Burst: burstRate, Wait: allowLimitsMW}
 
 	for _, o := range options {
 		o(args)
 	}
 
-	router.Use(loggingMW)
-	router.Use(rateLimitingMW(args.RequestPerSecond, args.Burst))
-	api := router.PathPrefix("/api").Headers("Content-Type", "application/json").Subrouter()
+	limiter.SetLimit(rate.Limit(args.RequestPerSecond))
 
-	constructAPI(api)
+	router.Use(args.Wait)
+	router.Use(loggingMW)
+
+	constructAPI(router.PathPrefix("/api").Headers("Content-Type", "application/json").Subrouter())
 
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         "0.0.0.0" + args.Port,
-		WriteTimeout: 30 * time.Second,
-		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 20 * time.Second,
+		ReadTimeout:  20 * time.Second,
 	}
 
 	logger.Printf("starting on %s", args.Port)

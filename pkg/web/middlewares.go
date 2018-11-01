@@ -3,10 +3,7 @@ package web
 import (
 	"context"
 	"net/http"
-
-	"github.com/gorilla/mux"
-
-	"golang.org/x/time/rate"
+	"time"
 )
 
 func loggingMW(next http.Handler) http.Handler {
@@ -16,19 +13,25 @@ func loggingMW(next http.Handler) http.Handler {
 	})
 }
 
-func rateLimitingMW(rps int64, burst int) mux.MiddlewareFunc {
-	logger.Println("Rate: ", rps, "burst: ", burst)
-	return func(next http.Handler) http.Handler {
-		limiter := rate.NewLimiter(rate.Limit(rps), burst)
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
+func allowLimitsMW(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !limiter.Allow() {
+			http.Error(w, "TooManyRequests", http.StatusTooManyRequests)
+		}
 
-			if err := limiter.Wait(ctx); err != nil {
-				http.Error(w, err.Error(), http.StatusTooManyRequests)
-			}
+		next.ServeHTTP(w, r)
+	})
+}
 
-			next.ServeHTTP(w, r)
-		})
-	}
+func waitLimitsMW(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		if err := limiter.Wait(ctx); err != nil {
+			http.Error(w, err.Error(), http.StatusTooManyRequests)
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

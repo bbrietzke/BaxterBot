@@ -55,9 +55,11 @@ to quickly create a Cobra application.`,
 			options = append(options, web.RequestsPerSecond(v))
 		}
 
-		if cmd.Flag("rps").Changed {
-			v, _ := strconv.Atoi(cmd.Flag("burst").Value.String())
-			options = append(options, web.BurstLimit(v))
+		if cmd.Flag("wait").Changed {
+			v, _ := strconv.ParseBool(cmd.Flag("wait").Value.String())
+			if v {
+				options = append(options, web.Wait())
+			}
 		}
 
 		web.Start(options...)
@@ -76,9 +78,8 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.baxter_bot.yaml)")
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().Bool("wait", false, "use wait protocol for rate limiting")
 	rootCmd.Flags().Int64("rps", 10, "requests per second")
-	rootCmd.Flags().Int32("burst", 2, "burst limit")
 }
 
 // initConfig reads in config file and ENV variables if set.

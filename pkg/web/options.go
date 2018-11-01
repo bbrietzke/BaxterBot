@@ -1,12 +1,17 @@
 package web
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/gorilla/mux"
+)
 
 // Options contain the configuration for the web server
 type Options struct {
 	Port             string
 	RequestPerSecond int64
 	Burst            int
+	Wait             mux.MiddlewareFunc
 }
 
 // Option custom type
@@ -30,9 +35,9 @@ func RequestsPerSecond(rps int64) Option {
 	}
 }
 
-// BurstLimit is the maximuim number of incoming requests
-func BurstLimit(burst int) Option {
+// Wait specifies we should use the wait protocol versuses the allow.
+func Wait() Option {
 	return func(args *Options) {
-		args.Burst = burst
+		args.Wait = waitLimitsMW
 	}
 }
