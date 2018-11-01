@@ -29,3 +29,10 @@ func RequestsPerSecond(rps int64) Option {
 		args.RequestPerSecond = rps
 	}
 }
+
+// BurstLimit is the maximuim number of incoming requests
+func BurstLimit(burst int) Option {
+	return func(args *Options) {
+		args.Burst = burst
+	}
+}

@@ -17,6 +17,7 @@ func loggingMW(next http.Handler) http.Handler {
 }
 
 func rateLimitingMW(rps int64, burst int) mux.MiddlewareFunc {
+	logger.Println("Rate: ", rps, "burst: ", burst)
 	return func(next http.Handler) http.Handler {
 		limiter := rate.NewLimiter(rate.Limit(rps), burst)
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -28,6 +28,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/bbrietzke/BaxterBot/pkg/web"
 	homedir "github.com/mitchellh/go-homedir"
@@ -47,7 +48,19 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		web.Start()
+		options := []web.Option{}
+
+		if cmd.Flag("rps").Changed {
+			v, _ := strconv.ParseInt(cmd.Flag("rps").Value.String(), 10, 64)
+			options = append(options, web.RequestsPerSecond(v))
+		}
+
+		if cmd.Flag("rps").Changed {
+			v, _ := strconv.Atoi(cmd.Flag("burst").Value.String())
+			options = append(options, web.BurstLimit(v))
+		}
+
+		web.Start(options...)
 	},
 }
 
@@ -64,6 +77,8 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.baxter_bot.yaml)")
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().Int64("rps", 10, "requests per second")
+	rootCmd.Flags().Int32("burst", 2, "burst limit")
 }
 
 // initConfig reads in config file and ENV variables if set.

@@ -18,13 +18,11 @@ const (
 )
 
 var (
-	router *mux.Router
 	logger *log.Logger
 	cache  *lru.Cache
 )
 
 func init() {
-	router = mux.NewRouter()
 	logger = log.New(os.Stdout, "WEB  ", log.LstdFlags|log.Lshortfile)
 	cache, _ = lru.New(8)
 }
@@ -41,6 +39,7 @@ Options that can be included are:
 		Automatically sets the Burst to be 10% of the RequestsPerSecond value.
 */
 func Start(options ...Option) error {
+	router := mux.NewRouter()
 	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Burst: burstRate}
 
 	for _, o := range options {
@@ -51,8 +50,7 @@ func Start(options ...Option) error {
 	router.Use(rateLimitingMW(args.RequestPerSecond, args.Burst))
 	api := router.PathPrefix("/api").Headers("Content-Type", "application/json").Subrouter()
 
-	api.Handle(createStoreValueJSON()).Methods("POST")
-	api.Handle(getStoreValueJSON()).Methods("GET")
+	constructAPI(api)
 
 	srv := &http.Server{
 		Handler:      router,
@@ -66,4 +64,4 @@ func Start(options ...Option) error {
 	return srv.ListenAndServe()
 }
 
-// cat body.txt | vegeta attack -duration 10s  | tee /tmp/report.bin | vegeta report -type=text && cat /tmp/report.bin | vegeta.plot > /tmp/open.html && open /tmp/page.html
+// cat body.txt | vegeta attack -duration 10s  | tee /tmp/report.bin | vegeta report -type=text && cat /tmp/report.bin | vegeta plot > /tmp/page.html && open /tmp/page.html

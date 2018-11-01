@@ -32,7 +32,7 @@ test:
 test-template:
 	$(GO_TEST) github.com/bbrietzke/BaxterBot/*
 
-build-pi: $(BINDIR)
+build-pi: $(BINDIR) test
 	GOOS=linux GOARCH=arm GOARM=5 $(GO_BUILD) -o $(BINDIR)/pi/BaxterBot
 
 
