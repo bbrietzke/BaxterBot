@@ -4,7 +4,9 @@ import "strings"
 
 // Options contain the configuration for the web server
 type Options struct {
-	Port string
+	Port             string
+	RequestPerSecond int64
+	Burst            int
 }
 
 // Option custom type
@@ -18,5 +20,13 @@ func Port(port string) Option {
 
 	return func(args *Options) {
 		args.Port = port
+	}
+}
+
+// RequestsPerSecond defines how many HTTP requests can be handled per second of real time.
+func RequestsPerSecond(rps int64) Option {
+	return func(args *Options) {
+		args.RequestPerSecond = rps
+		args.Burst = int(rps / 10)
 	}
 }

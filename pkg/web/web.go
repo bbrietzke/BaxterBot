@@ -11,6 +11,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	requestsPerSeconds int64  = 10
+	defaultHTTPPort    string = ":8080"
+)
+
 var (
 	router *mux.Router
 	logger *log.Logger
@@ -23,16 +28,26 @@ func init() {
 	cache, _ = lru.New(8)
 }
 
-// Start creates and starts an HTTP server on port 8080, or a different port
-// if one is provided as an option.
-//
-// Options that can be included are:
-// * Port
-//
+/*
+Start creates and starts an HTTP server on port 8080, or a different port
+if one is provided as an option.
+
+Options that can be included are:
+	Port
+		Sets the port that the http.Server will run on.
+	RequestsPerSecond
+		Sets the rate limiter to only allow a set amount of HTTP requests per second.
+		Automatically sets the Burst to be 10% of the RequestsPerSecond value.
+*/
 func Start(options ...Option) error {
-	args := &Options{Port: ":8080"}
+	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Burst: int(requestsPerSeconds / 10)}
+
+	for _, o := range options {
+		o(args)
+	}
 
 	router.Use(loggingMW)
+	//router.Use(rateLimitingMW(args.RequestPerSecond, args.Burst))
 	api := router.PathPrefix("/api").Headers("Content-Type", "application/json").Subrouter()
 
 	api.Handle(createStoreValueJSON()).Methods("POST")
@@ -49,16 +64,3 @@ func Start(options ...Option) error {
 
 	return srv.ListenAndServe()
 }
-
-func loggingMW(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Println(r.RequestURI)
-		next.ServeHTTP(w, r)
-	})
-}
-
-/*
-curl -X GET -H "Content-type: application/json" -H "Accept: application/json"  "http://localhost:8080/api/fred"
-
-curl --header "Content-Type: application/json" --request POST --data '{"username":"xyz","password":"xyz"}' http://localhost:8080/api/fred
-*/
