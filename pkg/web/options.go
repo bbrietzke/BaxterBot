@@ -27,6 +27,5 @@ func Port(port string) Option {
 func RequestsPerSecond(rps int64) Option {
 	return func(args *Options) {
 		args.RequestPerSecond = rps
-		args.Burst = int(rps / 10)
 	}
 }

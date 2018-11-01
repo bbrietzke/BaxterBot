@@ -13,6 +13,7 @@ import (
 
 const (
 	requestsPerSeconds int64  = 10
+	burstRate          int    = 2
 	defaultHTTPPort    string = ":8080"
 )
 
@@ -40,14 +41,14 @@ Options that can be included are:
 		Automatically sets the Burst to be 10% of the RequestsPerSecond value.
 */
 func Start(options ...Option) error {
-	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Burst: int(requestsPerSeconds / 10)}
+	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Burst: burstRate}
 
 	for _, o := range options {
 		o(args)
 	}
 
 	router.Use(loggingMW)
-	//router.Use(rateLimitingMW(args.RequestPerSecond, args.Burst))
+	router.Use(rateLimitingMW(args.RequestPerSecond, args.Burst))
 	api := router.PathPrefix("/api").Headers("Content-Type", "application/json").Subrouter()
 
 	api.Handle(createStoreValueJSON()).Methods("POST")
@@ -64,3 +65,5 @@ func Start(options ...Option) error {
 
 	return srv.ListenAndServe()
 }
+
+// cat body.txt | vegeta attack -duration 10s  | tee /tmp/report.bin | vegeta report -type=text && cat /tmp/report.bin | vegeta.plot > /tmp/open.html && open /tmp/page.html
