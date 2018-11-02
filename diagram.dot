@@ -1,14 +1,20 @@
 digraph baxter_bot {
-    layout=dot
     rankdir=LR
 
-    R_LD [label="Leader" shape=doublecircle]
-    R_ON [label="Member" shape=circle]
-    R_TW [label="Member" shape=circle]
+    HTTP_SRC [label="HTTP"]
 
-    subgraph cluster_raft {
-        label="Raft Network"
-        R_LD->R_ON
-        R_LD->R_TW
+    WEB [label="Server", shape=circle]
+    CAC [label="Cache" shape=circle]
+    GQL [label="GraphQL" shape=circle]
+
+    HTTP_SRC  ->  WEB
+
+    subgraph cluster_web {
+        label="Web Component"
+        style=rounded
+        WEB -> CAC -> WEB [style=dashed, color=grey]
+        WEB -> GQL
+        GQL -> CAC -> GQL [style=dashed, color=grey]
+        {rank=same GQL CAC}
     }
 }

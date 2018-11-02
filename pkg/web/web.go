@@ -27,7 +27,7 @@ var (
 )
 
 func init() {
-	logger = log.New(os.Stdout, "WEB  ", log.LstdFlags|log.Lshortfile)
+	logger = log.New(os.Stdout, "WEB   ", log.LstdFlags|log.Lshortfile)
 	cache, _ = lru.New(defaultCacheSize)
 	limiter = rate.NewLimiter(rate.Limit(1), burstRate)
 }

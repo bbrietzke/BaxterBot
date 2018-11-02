@@ -30,13 +30,18 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/bbrietzke/BaxterBot/pkg/swarm"
+
 	"github.com/bbrietzke/BaxterBot/pkg/web"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile          string
+	terminateChannel chan error
+)
 
 var rootCmd = &cobra.Command{
 	Use:   "BaxterBot",
@@ -48,21 +53,47 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		options := []web.Option{}
+		terminateChannel = make(chan error, 5)
+		webOptions := []web.Option{}
+		swarmOptions := []swarm.Option{}
+
+		if cmd.Flag("swarm").Changed {
+			swarmOptions = append(swarmOptions, swarm.Port(cmd.Flag("swarm").Value.String()))
+		}
+
+		if cmd.Flag("name").Changed {
+			swarmOptions = append(swarmOptions, swarm.Name(cmd.Flag("name").Value.String()))
+		}
 
 		if cmd.Flag("rps").Changed {
 			v, _ := strconv.ParseInt(cmd.Flag("rps").Value.String(), 10, 64)
-			options = append(options, web.RequestsPerSecond(v))
+			webOptions = append(webOptions, web.RequestsPerSecond(v))
 		}
 
 		if cmd.Flag("wait").Changed {
 			if v, _ := strconv.ParseBool(cmd.Flag("wait").Value.String()); v {
-				options = append(options, web.Wait())
+				webOptions = append(webOptions, web.Wait())
 			}
 		}
 
-		web.Start(options...)
+		go delegateSwarmStart(terminateChannel, swarmOptions...)
+		go delegateWebStart(terminateChannel, webOptions...)
+
+		select {
+		case err := <-terminateChannel:
+			fmt.Println(err)
+		}
 	},
+}
+
+func delegateWebStart(stop chan error, options ...web.Option) {
+	stop <- web.Start(options...)
+}
+
+func delegateSwarmStart(stop chan error, options ...swarm.Option) {
+	if err := swarm.Start(options...); err != nil {
+		stop <- err
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -77,8 +108,10 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.baxter_bot.yaml)")
-	rootCmd.Flags().Bool("wait", false, "use wait protocol for rate limiting")
-	rootCmd.Flags().Int64("rps", 10, "requests per second")
+	rootCmd.PersistentFlags().Bool("wait", false, "use wait protocol for rate limiting")
+	rootCmd.PersistentFlags().Int64("rps", 10, "requests per second")
+	rootCmd.PersistentFlags().String("swarm", ":21000", "port to host the swarm on")
+	rootCmd.PersistentFlags().String("name", "", "name to take as part of the swarm")
 }
 
 // initConfig reads in config file and ENV variables if set.
