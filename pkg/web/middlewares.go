@@ -16,7 +16,8 @@ func loggingMW(next http.Handler) http.Handler {
 func allowLimitsMW(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !limiter.Allow() {
-			http.Error(w, "TooManyRequests", http.StatusTooManyRequests)
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
 		}
 
 		next.ServeHTTP(w, r)
@@ -29,7 +30,8 @@ func waitLimitsMW(next http.Handler) http.Handler {
 		defer cancel()
 
 		if err := limiter.Wait(ctx); err != nil {
-			http.Error(w, err.Error(), http.StatusTooManyRequests)
+			w.WriteHeader(http.StatusTooManyRequests)
+			return
 		}
 
 		next.ServeHTTP(w, r)

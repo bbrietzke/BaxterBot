@@ -26,7 +26,11 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"math/rand"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -35,27 +39,41 @@ import (
 var vegetaCmd = &cobra.Command{
 	Use:   "vegeta",
 	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("vegeta called")
+		host := cmd.Flag("addr").Value.String()
+		fileNameKey := time.Now().UnixNano()
+		rand.Seed(fileNameKey)
+		c := rand.Intn(500) + 50
+		jsonFile := fmt.Sprintf("/tmp/%d.json", fileNameKey)
+		data := map[string]string{
+			"Value": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.",
+			"Key":   "1",
+		}
+		b, _ := json.Marshal(data)
+		ioutil.WriteFile(jsonFile, b, 0644)
+
+		keys := []string{"january", "feburary", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december", "octember"}
+
+		statements := []string{
+			"POST %s/api/%s\nContent-Type: application/json\n@" + jsonFile + "\n",
+			"GET %s/api/%s\nContent-Type: application/json\n",
+			"POST %s/api/%s\nContent-Type: application/json\n@" + jsonFile + "\n",
+			"GET %s/api/%s\nContent-Type: application/json\n",
+			"DELETE %s/api/%s\nContent-Type: application/json\n",
+			"GET %s/api/%s\nContent-Type: application/json\n",
+		}
+
+		for i := 0; i < c; i++ {
+			key := keys[rand.Intn(len(keys))]
+			statement := statements[rand.Intn(len(statements))]
+			fmt.Printf(statement, host, key)
+			fmt.Println()
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(vegetaCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// vegetaCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// vegetaCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	vegetaCmd.Flags().StringP("addr", "a", "http://localhost:8080/", "http://hostname:port/")
 }

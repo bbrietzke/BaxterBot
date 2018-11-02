@@ -17,6 +17,7 @@ const (
 	requestsPerSeconds int64  = 25
 	burstRate          int    = 5
 	defaultHTTPPort    string = ":8080"
+	defaultCacheSize   int    = 10
 )
 
 var (
@@ -27,7 +28,7 @@ var (
 
 func init() {
 	logger = log.New(os.Stdout, "WEB  ", log.LstdFlags|log.Lshortfile)
-	cache, _ = lru.New(8)
+	cache, _ = lru.New(defaultCacheSize)
 	limiter = rate.NewLimiter(rate.Limit(1), burstRate)
 }
 
@@ -70,5 +71,3 @@ func Start(options ...Option) error {
 
 	return srv.ListenAndServe()
 }
-
-// cat body.txt | vegeta attack -duration 10s  | tee /tmp/report.bin | vegeta report -type=text && cat /tmp/report.bin | vegeta plot > /tmp/page.html && open /tmp/page.html

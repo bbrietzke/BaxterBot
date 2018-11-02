@@ -7,6 +7,6 @@ Manual Testing with curl:
 	curl -X GET -H "Content-type: application/json" -H "Accept: application/json"  "http://localhost:8080/api/fred"
 
 Load Testing with vegeta
-	cat body.txt | vegeta attack -duration 10s  | tee /tmp/report.bin | vegeta report -type=text && cat /tmp/report.bin | vegeta plot > /tmp/page.html && open /tmp/page.html
+	BaxterBot vegeta --addr http://10.41.45.222:8080 | vegeta attack -duration 10s  | tee /tmp/report.bin | vegeta report -type=text && cat /tmp/report.bin | vegeta plot > /tmp/page.html && open /tmp/page.html
 */
 package web

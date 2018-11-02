@@ -10,6 +10,7 @@ import (
 func constructAPI(r *mux.Router) {
 	r.Handle(createStoreValueJSON()).Methods("POST")
 	r.Handle(getStoreValueJSON()).Methods("GET")
+	r.Handle(deleteStoreValueJSON()).Methods("DELETE")
 }
 
 func getStoreValueJSON() (string, http.HandlerFunc) {
@@ -38,5 +39,14 @@ func createStoreValueJSON() (string, http.HandlerFunc) {
 		}
 
 		cache.Add(v["key"], t)
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func deleteStoreValueJSON() (string, http.HandlerFunc) {
+	return "/{key:[A-Za-z]+}", func(w http.ResponseWriter, r *http.Request) {
+		v := mux.Vars(r)
+		cache.Remove(v["key"])
+		w.WriteHeader(http.StatusOK)
 	}
 }
