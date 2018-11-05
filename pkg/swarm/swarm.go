@@ -1,8 +1,12 @@
 package swarm
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -31,7 +35,7 @@ func Start(options ...Option) error {
 		o(args)
 	}
 
-	addr, err := net.ResolveTCPAddr("tcp", args.Port)
+	addr, err := net.ResolveTCPAddr("tcp", outboundIP(args.Port))
 
 	if err != nil {
 		return err
@@ -50,9 +54,23 @@ func Start(options ...Option) error {
 	if err != nil {
 		return err
 	}
-
-	f := swarmer.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: config.LocalID, Address: myAddr}}})
 	go listenForLeadership(swarmer.LeaderCh())
 
-	return f.Error()
+	if args.SingleNode {
+		f := swarmer.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: config.LocalID, Address: myAddr}}})
+		return f.Error()
+	} else {
+		logger.Println(args.Name, outboundIP(args.Port))
+		v, err := json.Marshal(Registration{Name: args.Name, Address: outboundIP(args.Port)})
+		if err != nil {
+			logger.Panicln(err)
+		}
+		if r, err := http.Post(fmt.Sprintf("http://%s/join", args.Join), "application-type/json", bytes.NewReader(v)); err == nil {
+			defer r.Body.Close()
+		} else {
+			logger.Panicln(err)
+		}
+	}
+
+	return nil
 }

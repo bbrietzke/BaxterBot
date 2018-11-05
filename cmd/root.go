@@ -61,8 +61,17 @@ to quickly create a Cobra application.`,
 			swarmOptions = append(swarmOptions, swarm.Port(cmd.Flag("swarm").Value.String()))
 		}
 
+		if cmd.Flag("join").Changed {
+			swarmOptions = append(swarmOptions, swarm.Join(cmd.Flag("join").Value.String()))
+		}
+
 		if cmd.Flag("name").Changed {
 			swarmOptions = append(swarmOptions, swarm.Name(cmd.Flag("name").Value.String()))
+		}
+
+		if cmd.Flag("http").Changed {
+			v := cmd.Flag("http").Value.String()
+			webOptions = append(webOptions, web.Port(v))
 		}
 
 		if cmd.Flag("rps").Changed {
@@ -111,7 +120,9 @@ func init() {
 	rootCmd.PersistentFlags().Bool("wait", false, "use wait protocol for rate limiting")
 	rootCmd.PersistentFlags().Int64("rps", 10, "requests per second")
 	rootCmd.PersistentFlags().String("swarm", ":21000", "port to host the swarm on")
+	rootCmd.PersistentFlags().String("http", ":8080", "port to host the http server on")
 	rootCmd.PersistentFlags().String("name", "", "name to take as part of the swarm")
+	rootCmd.PersistentFlags().String("join", "", "swarm host to join to")
 }
 
 // initConfig reads in config file and ENV variables if set.

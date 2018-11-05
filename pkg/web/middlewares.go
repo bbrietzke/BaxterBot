@@ -8,7 +8,7 @@ import (
 
 func loggingMW(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Println(r.RequestURI)
+		logger.Println(r.RemoteAddr, r.Method, r.RequestURI, r.ContentLength)
 		next.ServeHTTP(w, r)
 	})
 }

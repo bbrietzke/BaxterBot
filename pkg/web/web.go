@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/bbrietzke/BaxterBot/pkg/swarm"
+
 	"golang.org/x/time/rate"
 
 	"github.com/hashicorp/golang-lru"
@@ -59,6 +61,7 @@ func Start(options ...Option) error {
 	router.Use(loggingMW)
 
 	constructAPI(router.PathPrefix("/api").Headers("Content-Type", "application/json").Subrouter())
+	swarm.SetupHTTP(router.PathPrefix("/swarm").Subrouter())
 
 	srv := &http.Server{
 		Handler:      router,
