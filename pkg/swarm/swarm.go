@@ -13,6 +13,8 @@ import (
 var (
 	swarmer *raft.Raft
 	logger  *log.Logger
+	myAddr  raft.ServerAddress
+	leader  bool
 )
 
 func init() {
@@ -37,6 +39,7 @@ func Start(options ...Option) error {
 	config.LocalID = raft.ServerID(args.Name)
 
 	transport, err := raft.NewTCPTransportWithLogger(args.Port, addr, 10, 20*time.Second, logger)
+	myAddr = transport.LocalAddr()
 
 	if err != nil {
 		return err
@@ -48,6 +51,8 @@ func Start(options ...Option) error {
 		return err
 	}
 
-	f := swarmer.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: config.LocalID, Address: transport.LocalAddr()}}})
+	f := swarmer.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: config.LocalID, Address: myAddr}}})
+	go listenForLeadership(swarmer.LeaderCh())
+
 	return f.Error()
 }

@@ -29,3 +29,11 @@ func (fsm *stateMachine) Restore(snap io.ReadCloser) error {
 func (fsm *stateMachine) Snapshot() (raft.FSMSnapshot, error) {
 	return nil, errors.New("Not Implemented")
 }
+
+func (fsm *stateMachine) Persist(sink raft.SnapshotSink) error {
+	return nil
+}
+
+func (fsm *stateMachine) Release() {
+
+}

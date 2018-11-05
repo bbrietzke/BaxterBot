@@ -42,12 +42,12 @@ Options that can be included are:
 	RequestsPerSecond
 		Sets the rate limiter to only allow a set amount of HTTP requests per second.
 		Automatically sets the Burst to be 10% of the RequestsPerSecond value.
-	Burst
-		Maximum number of incoming requests before rate limiting begins.
+	Wait
+		Uses the rate.Limiter Wait protocol instead of Allow.
 */
 func Start(options ...Option) error {
 	router := mux.NewRouter()
-	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Burst: burstRate, Wait: allowLimitsMW}
+	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Wait: allowLimitsMW}
 
 	for _, o := range options {
 		o(args)

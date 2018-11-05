@@ -1,6 +1,9 @@
 package swarm
 
-import "strings"
+import (
+	"os"
+	"strings"
+)
 
 // Options contain the configuration for the swarm
 type Options struct {
@@ -8,6 +11,7 @@ type Options struct {
 	SingleNode bool
 	Join       string
 	Name       string
+	DataDir    string
 }
 
 // Option custom type
@@ -32,9 +36,21 @@ func Join(host string) Option {
 	}
 }
 
-// Name specifies the host and port that we should talk to in order to join the swarm
+// Name specifies the name with which to represent ourselves in the swarm
 func Name(name string) Option {
 	return func(args *Options) {
 		args.Name = name
+	}
+}
+
+// DataDir sets the path to store data
+func DataDir(path string) Option {
+	if s, err := os.Stat(path); err == nil && s.IsDir() {
+		return func(args *Options) {
+			args.DataDir = path
+		}
+	}
+
+	return func(args *Options) {
 	}
 }
