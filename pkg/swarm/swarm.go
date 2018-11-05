@@ -57,19 +57,18 @@ func Start(options ...Option) error {
 	go listenForLeadership(swarmer.LeaderCh())
 
 	if args.SingleNode {
-		f := swarmer.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: config.LocalID, Address: myAddr}}})
-		return f.Error()
+		return swarmer.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: config.LocalID, Address: myAddr}}}).Error()
+	}
+
+	logger.Println(args.Name, outboundIP(args.Port))
+	v, err := json.Marshal(Registration{Name: args.Name, Address: outboundIP(args.Port)})
+	if err != nil {
+		logger.Panicln(err)
+	}
+	if r, err := http.Post(fmt.Sprintf("http://%s/join", args.Join), "application-type/json", bytes.NewReader(v)); err == nil {
+		defer r.Body.Close()
 	} else {
-		logger.Println(args.Name, outboundIP(args.Port))
-		v, err := json.Marshal(Registration{Name: args.Name, Address: outboundIP(args.Port)})
-		if err != nil {
-			logger.Panicln(err)
-		}
-		if r, err := http.Post(fmt.Sprintf("http://%s/join", args.Join), "application-type/json", bytes.NewReader(v)); err == nil {
-			defer r.Body.Close()
-		} else {
-			logger.Panicln(err)
-		}
+		logger.Panicln(err)
 	}
 
 	return nil
