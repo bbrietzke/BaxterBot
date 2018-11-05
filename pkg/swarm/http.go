@@ -23,7 +23,7 @@ func SetupHTTP(mux *mux.Router) {
 }
 
 func handleLeave() (string, http.HandlerFunc) {
-	return "/leave", func(w http.ResponseWriter, r *http.Request) {
+	return "/leave/{node}", func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
