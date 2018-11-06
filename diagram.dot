@@ -3,11 +3,11 @@ digraph baxter_bot {
 
     HTTP_SRC [label="HTTP"]
 
-    WEB [label="Server", shape=circle]
+    WEB [label="Web\nServer", shape=circle]
     CAC [label="Cache" shape=circle]
     GQL [label="GraphQL" shape=circle]
 
-    HTTP_SRC  ->  WEB
+    HTTP_SRC -> WEB 
 
     subgraph cluster_web {
         label="Web Component"

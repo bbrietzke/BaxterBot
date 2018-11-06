@@ -30,8 +30,8 @@ func handleLeave() (string, http.HandlerFunc) {
 func handleJoin() (string, http.HandlerFunc) {
 	return "/join", func(w http.ResponseWriter, r *http.Request) {
 		if !isLeader() {
-			logger.Println("Redirecting to leader:", leaderAddr())
-			http.Redirect(w, r, leaderAddr(), 302)
+			logger.Println("Redirecting to leader:", leaderRedirect)
+			http.Redirect(w, r, "http://"+leaderRedirect, 302)
 			return
 		}
 

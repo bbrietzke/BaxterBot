@@ -15,19 +15,22 @@ import (
 )
 
 var (
-	swarmer *raft.Raft
-	logger  *log.Logger
-	myAddr  raft.ServerAddress
-	leader  bool
+	swarmer        *raft.Raft
+	logger         *log.Logger
+	myAddr         raft.ServerAddress
+	leader         bool
+	httpPort       string
+	leaderRedirect string
 )
 
 func init() {
 	logger = log.New(os.Stdout, "SWARM ", log.LstdFlags|log.Lshortfile)
+	httpPort = ":8080"
 }
 
 // Start gets the swarm up and running
 func Start(options ...Option) error {
-	args := &Options{Port: ":21000", SingleNode: true, Join: "", Name: strings.ToUpper(NewName().Haikunate())}
+	args := &Options{Port: ":21000", SingleNode: true, Join: "", Name: strings.ToUpper(NewName().Haikunate()), HTTP: httpPort}
 	config := raft.DefaultConfig()
 	config.Logger = logger
 
@@ -35,6 +38,7 @@ func Start(options ...Option) error {
 		o(args)
 	}
 
+	httpPort = args.HTTP
 	addr, err := net.ResolveTCPAddr("tcp", outboundIP(args.Port))
 
 	if err != nil {
@@ -54,6 +58,7 @@ func Start(options ...Option) error {
 	if err != nil {
 		return err
 	}
+
 	go listenForLeadership(swarmer.LeaderCh())
 
 	if args.SingleNode {
@@ -66,6 +71,7 @@ func Start(options ...Option) error {
 		logger.Panicln(err)
 	}
 	if r, err := http.Post(fmt.Sprintf("http://%s/join", args.Join), "application-type/json", bytes.NewReader(v)); err == nil {
+		logger.Println(r.StatusCode)
 		defer r.Body.Close()
 	} else {
 		logger.Panicln(err)

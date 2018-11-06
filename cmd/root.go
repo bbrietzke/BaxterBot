@@ -72,6 +72,7 @@ to quickly create a Cobra application.`,
 		if cmd.Flag("http").Changed {
 			v := cmd.Flag("http").Value.String()
 			webOptions = append(webOptions, web.Port(v))
+			swarmOptions = append(swarmOptions, swarm.HTTP(v))
 		}
 
 		if cmd.Flag("rps").Changed {

@@ -12,6 +12,7 @@ type Options struct {
 	Join       string
 	Name       string
 	DataDir    string
+	HTTP       string
 }
 
 // Option custom type
@@ -25,6 +26,17 @@ func Port(port string) Option {
 
 	return func(args *Options) {
 		args.Port = port
+	}
+}
+
+// HTTP defines a custom HTTP port
+func HTTP(port string) Option {
+	if !strings.Contains(port, ":") {
+		port = ":" + port
+	}
+
+	return func(args *Options) {
+		args.HTTP = port
 	}
 }
 

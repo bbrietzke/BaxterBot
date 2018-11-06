@@ -1,6 +1,7 @@
 package swarm
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"sync"
@@ -18,7 +19,16 @@ type stateMachine struct {
 }
 
 func (fsm *stateMachine) Apply(l *raft.Log) interface{} {
-	logger.Panicf("%+v", l)
+	cmd := command{}
+	if err := json.Unmarshal(l.Data, &cmd); err == nil {
+		switch cmd.Idx {
+		case leaderUpdate:
+			d := leaderHTTP{}
+			json.Unmarshal(cmd.Sub, &d)
+			logger.Printf("%+v", d)
+			leaderRedirect = d.Addr
+		}
+	}
 	return nil
 }
 
