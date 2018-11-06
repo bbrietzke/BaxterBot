@@ -3,6 +3,7 @@ package swarm
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"sync"
 
@@ -25,8 +26,8 @@ func (fsm *stateMachine) Apply(l *raft.Log) interface{} {
 		case leaderUpdate:
 			d := leaderHTTP{}
 			json.Unmarshal(cmd.Sub, &d)
-			logger.Printf("%+v", d)
-			leaderRedirect = d.Addr
+			logger.Printf("index %d :: data %+v", l.Index, d)
+			leaderRedirect = fmt.Sprintf("http://%s/swarm/join", d.Addr)
 		}
 	}
 	return nil

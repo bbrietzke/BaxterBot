@@ -46,7 +46,10 @@ func Start(options ...Option) error {
 	}
 	config.LocalID = raft.ServerID(args.Name)
 
-	transport, err := raft.NewTCPTransportWithLogger(args.Port, addr, 10, 20*time.Second, logger)
+	transport, err := raft.NewTCPTransportWithLogger(outboundIP(args.Port), addr, 10, 20*time.Second, logger)
+	if err != nil {
+		return err
+	}
 	myAddr = transport.LocalAddr()
 
 	if err != nil {
@@ -66,7 +69,7 @@ func Start(options ...Option) error {
 	}
 
 	logger.Println(args.Name, outboundIP(args.Port))
-	v, err := json.Marshal(Registration{Name: args.Name, Address: outboundIP(args.Port)})
+	v, err := json.Marshal(registration{Name: args.Name, Address: outboundIP(args.Port)})
 	if err != nil {
 		logger.Panicln(err)
 	}

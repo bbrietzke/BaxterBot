@@ -39,7 +39,6 @@ func listenForLeadership(c <-chan bool) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	for msg := range c {
-		logger.Println(msg, leader)
 		if msg && !leader {
 			logger.Println("* * * * * * * * * * LEADERSHIP ASSUMED * * * * * * * * * *")
 			swarmer.Apply(updateLeaderHTTP(), 3*time.Second).Error()

@@ -7,7 +7,7 @@ run2: dependencies test
 	$(GO_RUN) main.go --swarm 22000 --http 22080 --join localhost:8080/swarm
 
 run3: dependencies test
-	$(GO_RUN) main.go --swarm 22000 --http 22080 --join localhost:8080/swarm
+	$(GO_RUN) main.go --swarm 23000 --http 23080 --join localhost:8080/swarm
 
 dependencies: Gopkg.toml
 	$(DEP) ensure -v

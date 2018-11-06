@@ -10,20 +10,24 @@ import (
 	"github.com/hashicorp/raft"
 )
 
-//Registration blah blah blah
-type Registration struct {
+type registration struct {
 	Address string
 	Name    string
 }
 
 // SetupHTTP takes an http.ServeMux and adds a few paths to it.
 func SetupHTTP(mux *mux.Router) {
-	mux.Handle(handleJoin())
-	mux.Handle(handleLeave())
+	mux.Handle(handleJoin()).Methods("POST")
+	mux.Handle(handleLeave()).Methods("POST")
 }
 
 func handleLeave() (string, http.HandlerFunc) {
 	return "/leave/{node}", func(w http.ResponseWriter, r *http.Request) {
+		if !isLeader() {
+			logger.Println("Redirecting to leader:", leaderRedirect)
+			http.Redirect(w, r, leaderRedirect, http.StatusPermanentRedirect)
+			return
+		}
 	}
 }
 
@@ -31,11 +35,11 @@ func handleJoin() (string, http.HandlerFunc) {
 	return "/join", func(w http.ResponseWriter, r *http.Request) {
 		if !isLeader() {
 			logger.Println("Redirecting to leader:", leaderRedirect)
-			http.Redirect(w, r, "http://"+leaderRedirect, 302)
+			http.Redirect(w, r, leaderRedirect, http.StatusPermanentRedirect)
 			return
 		}
 
-		reg := Registration{}
+		reg := registration{}
 		if err := json.NewDecoder(r.Body).Decode(&reg); err != nil {
 			logger.Println("bad registration request")
 			w.WriteHeader(http.StatusBadRequest)
