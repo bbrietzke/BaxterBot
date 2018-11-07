@@ -5,6 +5,8 @@ import (
 	"log"
 	"net"
 	"time"
+
+	"github.com/bbrietzke/BaxterBot/pkg/protocol"
 )
 
 func isLeader() bool {
@@ -17,8 +19,12 @@ func leaderAddr() string {
 	return string(swarmer.Leader())
 }
 
+func apply(value []byte) error {
+	return swarmer.Apply(value, applyTimeout).Error()
+}
+
 func monitorLeadership(ctx context.Context) {
-	t := time.NewTicker(600 * time.Second)
+	t := time.NewTicker(monitorLeadershipTimeout)
 
 	for {
 		select {
@@ -27,9 +33,7 @@ func monitorLeadership(ctx context.Context) {
 			return
 		case <-t.C:
 			if isLeader() {
-				if err := swarmer.Apply(updateLeaderHTTP(), 3*time.Second).Error(); err != nil {
-					logger.Println("MonitorLeadership failed")
-				}
+				updateMyHTTP()
 			}
 		}
 	}
@@ -41,7 +45,7 @@ func listenForLeadership(c <-chan bool) {
 	for msg := range c {
 		if msg && !leader {
 			logger.Println("* * * * * * * * * * LEADERSHIP ASSUMED * * * * * * * * * *")
-			swarmer.Apply(updateLeaderHTTP(), 3*time.Second).Error()
+			updateMyHTTP()
 			ctx, cancel = context.WithCancel(context.Background())
 			defer cancel()
 			go monitorLeadership(ctx)
@@ -63,4 +67,17 @@ func outboundIP(port string) string {
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
 	return localAddr.IP.String() + port
+}
+
+func updateMyHTTP() {
+	value := outboundIP(httpPort)
+	v, err := protocol.UpdateLeaderHTTP(value)
+	if err != nil {
+		logger.Print(err)
+	}
+
+	err = apply(v)
+	if err != nil {
+		logger.Print(err)
+	}
 }

@@ -14,6 +14,11 @@ import (
 	"github.com/hashicorp/raft"
 )
 
+const (
+	applyTimeout             time.Duration = 2 * time.Second
+	monitorLeadershipTimeout time.Duration = 10 * time.Minute
+)
+
 var (
 	swarmer       *raft.Raft
 	logger        *log.Logger
@@ -58,7 +63,8 @@ func Start(options ...Option) error {
 		return err
 	}
 
-	swarmer, err = raft.NewRaft(config, newStateMachine(), raft.NewInmemStore(), raft.NewInmemStore(), newStateMachine(), transport)
+	store, err := raft.NewFileSnapshotStoreWithLogger("/tmp", 2, logger)
+	swarmer, err = raft.NewRaft(config, newStateMachine(), raft.NewInmemStore(), raft.NewInmemStore(), store, transport)
 
 	if err != nil {
 		return err
@@ -93,9 +99,4 @@ func IsLeader() bool {
 // LeaderAddr returns the IP address or DNS name of the current cluster leader.
 func LeaderAddr() string {
 	return leaderNetAddr
-}
-
-// UpdateKeyValuePair adds a key and value to the store.
-func UpdateKeyValuePair(key, value interface{}) error {
-	return swarmer.Apply(updateKeyValue(key, value), 3*time.Second).Error()
 }

@@ -27,10 +27,10 @@ $(DEP):
 Gopkg.toml: $(DEP)
 	$(DEP) init
 
-commands: pkg/protocol/commands.pb.go
+pkg/protocol/commands.pb.go: pkg/protocol/commands.proto
+	PATH=$(TPATH) $(PROTOC) -I/usr/local/include -I. -I$(GOPATH)/src -I pkg/protocol/ --go_out=pkg/protocol/. commands.proto
 
-pkg/protocol/commands.pb.go:
-	PATH=$(TPATH) $(PROTOC) -I/usr/local/include -I. -I$(GOPATH)/src -I pkg/protocol/ commands.proto --go_out=plugins=grpc:pkg/protocol
+commands: pkg/protocol/commands.pb.go
 
 test:
 	@echo "Test something here"

@@ -3,16 +3,25 @@ import "google/protobuf/any.proto";
 
 package protocol;
 
-message LeaderAddrUpdate {
-    string Http = 1;
-    string Grpc = 2;
+message CommandWrapper {
+    enum CommandType {
+        LEADER_HTTP_UPDATE = 0;
+        KEY_VALUE_CREATE = 1;
+        KEY_VALUE_DELETE = 2;
+    }
+    CommandType type = 1;
+    google.protobuf.Any child = 2;
+}
+
+message LeaderHttpUpdate {
+    string Addr = 1;
 }
 
 message KeyValueCreate {
-    string Key = 1;
-    google.protobuf.Any Value = 2;
+    string key = 1;
+    google.protobuf.Any value = 2;
 }
 
 message KeyValueDelete {
-    string Key = 1;
+    string key = 1;
 }

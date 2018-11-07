@@ -1,10 +1,13 @@
 package swarm
 
 import (
-	"encoding/json"
 	"errors"
 	"io"
 	"sync"
+
+	"github.com/golang/protobuf/proto"
+
+	"github.com/bbrietzke/BaxterBot/pkg/protocol"
 
 	"github.com/hashicorp/raft"
 )
@@ -19,20 +22,16 @@ type stateMachine struct {
 }
 
 func (fsm *stateMachine) Apply(l *raft.Log) interface{} {
-	cmd := command{}
-	if err := json.Unmarshal(l.Data, &cmd); err == nil {
-		switch cmd.Idx {
-		case keyValueUpdate:
-			d := keyValueUpdateJSON{}
-			json.Unmarshal(cmd.Sub, &d)
-			logger.Printf("index %d :: data %+v", l.Index, d)
-		case leaderUpdate:
-			d := leaderHTTPJSON{}
-			json.Unmarshal(cmd.Sub, &d)
-			logger.Printf("index %d :: data %+v", l.Index, d)
-			leaderNetAddr = d.Addr
-		}
+	wrapper := &protocol.CommandWrapper{}
+	proto.Unmarshal(l.Data, wrapper)
+
+	switch wrapper.Type {
+	case protocol.CommandWrapper_LEADER_HTTP_UPDATE:
+		fsm.updateLeaderHTTP(wrapper.Child.Value)
+	default:
+		logger.Println(wrapper.Type)
 	}
+
 	return nil
 }
 
@@ -50,4 +49,14 @@ func (fsm *stateMachine) Persist(sink raft.SnapshotSink) error {
 
 func (fsm *stateMachine) Release() {
 
+}
+
+func (fsm *stateMachine) updateLeaderHTTP(v []byte) {
+	value := protocol.LeaderHttpUpdate{}
+	err := proto.Unmarshal(v, &value)
+	if err != nil {
+		logger.Println(err)
+	}
+	leaderNetAddr = value.Addr
+	logger.Println("leader http has been set to", leaderNetAddr)
 }

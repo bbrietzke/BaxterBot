@@ -18,6 +18,17 @@
   version = "v1.4.7"
 
 [[projects]]
+  digest = "1:8e61458e9fd6d83dbc2d9796534e180e5bf478b1845b25dd2bf5e52b116c52c3"
+  name = "github.com/golang/protobuf"
+  packages = [
+    "proto",
+    "ptypes/any",
+  ]
+  pruneopts = "UT"
+  revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:c79fb010be38a59d657c48c6ba1d003a8aa651fa56b579d959d74573b7dff8e1"
   name = "github.com/gorilla/context"
   packages = ["."]
@@ -229,6 +240,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/golang/protobuf/proto",
+    "github.com/golang/protobuf/ptypes/any",
     "github.com/gorilla/mux",
     "github.com/hashicorp/golang-lru",
     "github.com/hashicorp/raft",
