@@ -15,17 +15,19 @@ import (
 )
 
 var (
-	swarmer        *raft.Raft
-	logger         *log.Logger
-	myAddr         raft.ServerAddress
-	leader         bool
-	httpPort       string
-	leaderRedirect string
+	swarmer       *raft.Raft
+	logger        *log.Logger
+	myAddr        raft.ServerAddress
+	leader        bool
+	grpcPort      string
+	httpPort      string
+	leaderNetAddr string
 )
 
 func init() {
 	logger = log.New(os.Stdout, "SWARM ", log.LstdFlags|log.Lshortfile)
 	httpPort = ":8080"
+	grpcPort = ":8100"
 }
 
 // Start gets the swarm up and running
@@ -56,7 +58,7 @@ func Start(options ...Option) error {
 		return err
 	}
 
-	swarmer, err = raft.NewRaft(config, newStateMachine(), raft.NewInmemStore(), raft.NewInmemStore(), raft.NewInmemSnapshotStore(), transport)
+	swarmer, err = raft.NewRaft(config, newStateMachine(), raft.NewInmemStore(), raft.NewInmemStore(), newStateMachine(), transport)
 
 	if err != nil {
 		return err
@@ -81,4 +83,19 @@ func Start(options ...Option) error {
 	}
 
 	return nil
+}
+
+// IsLeader reveals if this host is the leader for the swarm.
+func IsLeader() bool {
+	return leader
+}
+
+// LeaderAddr returns the IP address or DNS name of the current cluster leader.
+func LeaderAddr() string {
+	return leaderNetAddr
+}
+
+// UpdateKeyValuePair adds a key and value to the store.
+func UpdateKeyValuePair(key, value interface{}) error {
+	return swarmer.Apply(updateKeyValue(key, value), 3*time.Second).Error()
 }

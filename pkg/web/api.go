@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/bbrietzke/BaxterBot/pkg/swarm"
+
 	"github.com/gorilla/mux"
 )
 
@@ -39,6 +41,7 @@ func createStoreValueJSON() (string, http.HandlerFunc) {
 		}
 
 		cache.Add(v["key"], t)
+		swarm.UpdateKeyValuePair(v["key"], t)
 		w.WriteHeader(http.StatusOK)
 	}
 }

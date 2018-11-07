@@ -119,7 +119,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.baxter_bot.yaml)")
 	rootCmd.PersistentFlags().Bool("wait", false, "use wait protocol for rate limiting")
-	rootCmd.PersistentFlags().Int64("rps", 10, "requests per second")
+	rootCmd.PersistentFlags().Int64("rps", 0, "requests per second")
 	rootCmd.PersistentFlags().String("swarm", ":21000", "port to host the swarm on")
 	rootCmd.PersistentFlags().String("http", ":8080", "port to host the http server on")
 	rootCmd.PersistentFlags().String("name", "", "name to take as part of the swarm")

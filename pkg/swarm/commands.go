@@ -4,23 +4,40 @@ import (
 	"encoding/json"
 )
 
-type commandIndex int16
+type commandType int16
 
 const (
-	leaderUpdate commandIndex = iota
+	cmdUpdateLeaderAddr commandType = iota
+	cmdUpdateKeyValuePair
 )
 
 type command struct {
-	Idx commandIndex    `json:"idx"`
+	Typ commandType     `json:"typ"`
 	Sub json.RawMessage `json:"sub,omitempty"`
 }
 
-type leaderHTTP struct {
+type keyValueUpdateJSON struct {
+	Key   interface{} `json:"key,omitempty"`
+	Value interface{} `json:"value,omitempty"`
+}
+
+type leaderHTTPJSON struct {
 	Addr string `json:"addr"`
 }
 
+func updateKeyValue(key, value interface{}) []byte {
+	a, _ := json.Marshal(keyValueUpdateJSON{Key: key, Value: value})
+	c := command{
+		Idx: keyValueUpdate,
+		Sub: a,
+	}
+	d, _ := json.Marshal(c)
+
+	return d
+}
+
 func updateLeaderHTTP() []byte {
-	a, _ := json.Marshal(leaderHTTP{Addr: outboundIP(httpPort)})
+	a, _ := json.Marshal(leaderHTTPJSON{Addr: outboundIP(httpPort)})
 	c := command{
 		Idx: leaderUpdate,
 		Sub: a,

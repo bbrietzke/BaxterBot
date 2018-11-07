@@ -2,6 +2,7 @@ package swarm
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -18,24 +19,14 @@ type registration struct {
 // SetupHTTP takes an http.ServeMux and adds a few paths to it.
 func SetupHTTP(mux *mux.Router) {
 	mux.Handle(handleJoin()).Methods("POST")
-	mux.Handle(handleLeave()).Methods("POST")
-}
-
-func handleLeave() (string, http.HandlerFunc) {
-	return "/leave/{node}", func(w http.ResponseWriter, r *http.Request) {
-		if !isLeader() {
-			logger.Println("Redirecting to leader:", leaderRedirect)
-			http.Redirect(w, r, leaderRedirect, http.StatusPermanentRedirect)
-			return
-		}
-	}
 }
 
 func handleJoin() (string, http.HandlerFunc) {
 	return "/join", func(w http.ResponseWriter, r *http.Request) {
 		if !isLeader() {
-			logger.Println("Redirecting to leader:", leaderRedirect)
-			http.Redirect(w, r, leaderRedirect, http.StatusPermanentRedirect)
+			rd := fmt.Sprintf("http://%s/swarm/join", leaderNetAddr)
+			logger.Println("Redirecting to leader:", rd)
+			http.Redirect(w, r, rd, http.StatusPermanentRedirect)
 			return
 		}
 
