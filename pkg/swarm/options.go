@@ -11,6 +11,7 @@ type Options struct {
 	SingleNode bool
 	Join       string
 	Name       string
+	Named      bool
 	DataDir    string
 	HTTP       string
 }
@@ -52,6 +53,7 @@ func Join(host string) Option {
 func Name(name string) Option {
 	return func(args *Options) {
 		args.Name = name
+		args.Named = true
 	}
 }
 

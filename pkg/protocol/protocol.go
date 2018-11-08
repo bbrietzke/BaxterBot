@@ -36,7 +36,7 @@ func UpdateLeaderHTTP(leaderAddr string) ([]byte, error) {
 
 // CreateKeyValuePair creates the byte stream for adding key value pairs.
 func CreateKeyValuePair(key string, value []byte) ([]byte, error) {
-	b, e := proto.Marshal(&KeyValueCreate{Key: key, Value: &any.Any{TypeUrl: "local://KeyValueCreate", Value: value}})
+	b, e := proto.Marshal(&KeyValueCreate{Key: key, Value: &any.Any{Value: value}})
 	return wrapCommand(CommandWrapper_KEY_VALUE_CREATE, b, e)
 }
 
@@ -51,5 +51,5 @@ func wrapCommand(v CommandWrapper_CommandType, value []byte, err error) ([]byte,
 		return nil, err
 	}
 
-	return proto.Marshal(&CommandWrapper{Type: v, Child: &any.Any{TypeUrl: "local://Something", Value: value}})
+	return proto.Marshal(&CommandWrapper{Type: v, Child: &any.Any{Value: value}})
 }

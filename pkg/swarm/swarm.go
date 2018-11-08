@@ -11,6 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bbrietzke/BaxterBot/pkg/protocol"
+
+	"github.com/hashicorp/raft-boltdb"
+
 	"github.com/hashicorp/raft"
 )
 
@@ -37,7 +41,7 @@ func init() {
 
 // Start gets the swarm up and running
 func Start(options ...Option) error {
-	args := &Options{Port: ":21000", SingleNode: true, Join: "", Name: strings.ToUpper(NewName().Haikunate()), HTTP: httpPort}
+	args := &Options{Port: ":21000", SingleNode: true, DataDir: "/tmp", Join: "", Named: false, Name: strings.ToUpper(NewName().Haikunate()), HTTP: httpPort}
 	config := raft.DefaultConfig()
 	config.Logger = logger
 
@@ -45,12 +49,15 @@ func Start(options ...Option) error {
 		o(args)
 	}
 
+	if len(args.DataDir) > 0 {
+
+	}
 	httpPort = args.HTTP
 	addr, err := net.ResolveTCPAddr("tcp", outboundIP(args.Port))
-
 	if err != nil {
 		return err
 	}
+
 	config.LocalID = raft.ServerID(args.Name)
 
 	transport, err := raft.NewTCPTransportWithLogger(outboundIP(args.Port), addr, 10, 20*time.Second, logger)
@@ -63,8 +70,12 @@ func Start(options ...Option) error {
 		return err
 	}
 
-	store, err := raft.NewFileSnapshotStoreWithLogger("/tmp", 2, logger)
-	swarmer, err = raft.NewRaft(config, newStateMachine(), raft.NewInmemStore(), raft.NewInmemStore(), store, transport)
+	if args.Named {
+		store, _ := raftboltdb.NewBoltStore(fmt.Sprintf("/tmp/%s.db", args.Name))
+		swarmer, err = raft.NewRaft(config, newStateMachine(), store, store, raft.NewInmemSnapshotStore(), transport)
+	} else {
+		swarmer, err = raft.NewRaft(config, newStateMachine(), raft.NewInmemStore(), raft.NewInmemStore(), raft.NewInmemSnapshotStore(), transport)
+	}
 
 	if err != nil {
 		return err
@@ -73,7 +84,13 @@ func Start(options ...Option) error {
 	go listenForLeadership(swarmer.LeaderCh())
 
 	if args.SingleNode {
-		return swarmer.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: config.LocalID, Address: myAddr}}}).Error()
+		if c := swarmer.GetConfiguration(); c.Error() == nil {
+			if len(c.Configuration().Servers) == 0 {
+				return swarmer.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: config.LocalID, Address: myAddr}}}).Error()
+			}
+		}
+
+		return nil
 	}
 
 	logger.Println(args.Name, outboundIP(args.Port))
@@ -99,4 +116,14 @@ func IsLeader() bool {
 // LeaderAddr returns the IP address or DNS name of the current cluster leader.
 func LeaderAddr() string {
 	return leaderNetAddr
+}
+
+// CreateKeyValueEntry is a method
+func CreateKeyValueEntry(key string, value interface{}) {
+	v, err := json.Marshal(value)
+	if err == nil {
+		if err := apply(protocol.CreateKeyValuePair(key, v)); err != nil {
+			logger.Println(err)
+		}
+	}
 }

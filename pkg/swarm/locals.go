@@ -19,7 +19,10 @@ func leaderAddr() string {
 	return string(swarmer.Leader())
 }
 
-func apply(value []byte) error {
+func apply(value []byte, err error) error {
+	if err != nil {
+		return err
+	}
 	return swarmer.Apply(value, applyTimeout).Error()
 }
 
@@ -71,12 +74,8 @@ func outboundIP(port string) string {
 
 func updateMyHTTP() {
 	value := outboundIP(httpPort)
-	v, err := protocol.UpdateLeaderHTTP(value)
-	if err != nil {
-		logger.Print(err)
-	}
 
-	err = apply(v)
+	err := apply(protocol.UpdateLeaderHTTP(value))
 	if err != nil {
 		logger.Print(err)
 	}

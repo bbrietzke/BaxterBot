@@ -26,6 +26,8 @@ func (fsm *stateMachine) Apply(l *raft.Log) interface{} {
 	proto.Unmarshal(l.Data, wrapper)
 
 	switch wrapper.Type {
+	case protocol.CommandWrapper_KEY_VALUE_CREATE:
+		fsm.createKeyValue(wrapper.Child.Value)
 	case protocol.CommandWrapper_LEADER_HTTP_UPDATE:
 		fsm.updateLeaderHTTP(wrapper.Child.Value)
 	default:
@@ -59,4 +61,22 @@ func (fsm *stateMachine) updateLeaderHTTP(v []byte) {
 	}
 	leaderNetAddr = value.Addr
 	logger.Println("leader http has been set to", leaderNetAddr)
+}
+
+func (fsm *stateMachine) createKeyValue(v []byte) {
+	value := protocol.KeyValueCreate{}
+	err := proto.Unmarshal(v, &value)
+	if err != nil {
+		logger.Println(err)
+	}
+	logger.Printf("create :: %s :: %+v", value.Key, value.Value)
+}
+
+func (fsm *stateMachine) deleteKeyValue(v []byte) {
+	value := protocol.KeyValueDelete{}
+	err := proto.Unmarshal(v, &value)
+	if err != nil {
+		logger.Println(err)
+	}
+	logger.Printf("delete :: %s", value.Key)
 }
