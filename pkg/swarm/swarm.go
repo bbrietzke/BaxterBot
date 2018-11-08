@@ -31,9 +31,11 @@ var (
 	grpcPort      string
 	httpPort      string
 	leaderNetAddr string
+	outputChannel protocol.CommandPipeline
 )
 
 func init() {
+	outputChannel = make(protocol.CommandPipeline, 100)
 	logger = log.New(os.Stdout, "SWARM ", log.LstdFlags|log.Lshortfile)
 	httpPort = ":8080"
 	grpcPort = ":8100"
@@ -116,6 +118,11 @@ func IsLeader() bool {
 // LeaderAddr returns the IP address or DNS name of the current cluster leader.
 func LeaderAddr() string {
 	return leaderNetAddr
+}
+
+// Pipeline does something
+func Pipeline() <-chan interface{} {
+	return outputChannel
 }
 
 // CreateKeyValueEntry is a method

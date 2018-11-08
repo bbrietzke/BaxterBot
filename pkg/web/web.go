@@ -62,6 +62,7 @@ func Start(options ...Option) error {
 
 	constructAPI(router.PathPrefix("/api").Headers("Content-Type", "application/json").Subrouter())
 	swarm.SetupHTTP(router.PathPrefix("/swarm").Subrouter())
+	go pipelineProcessor(swarm.Pipeline())
 
 	srv := &http.Server{
 		Handler:      router,

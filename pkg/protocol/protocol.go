@@ -53,3 +53,13 @@ func wrapCommand(v CommandWrapper_CommandType, value []byte, err error) ([]byte,
 
 	return proto.Marshal(&CommandWrapper{Type: v, Child: &any.Any{Value: value}})
 }
+
+// GetCmd returns the Child command byte stream
+func (cw *CommandWrapper) GetCmd() []byte {
+	return cw.GetChild().GetValue()
+}
+
+// GetKeyedValue is a convience method
+func (kvc *KeyValueCreate) GetKeyedValue() []byte {
+	return kvc.GetValue().GetValue()
+}
