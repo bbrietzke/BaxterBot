@@ -74,3 +74,7 @@ func bootstrapOrJoin(args *Arguments, myAddr raft.ServerAddress) {
 		}
 	}
 }
+
+func evicted(key, value interface{}) {
+	logger.Printf("EVICTED: %+v/%+v", key, value)
+}

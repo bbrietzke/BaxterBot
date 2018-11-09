@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/hashicorp/golang-lru"
+
 	"github.com/hashicorp/raft"
 	"github.com/pkg/errors"
 )
@@ -21,6 +23,7 @@ var (
 	logger          *log.Logger
 	repl            *raft.Raft
 	isCurrentLeader bool
+	cache           *lru.Cache
 )
 
 func init() {
@@ -32,6 +35,7 @@ func init() {
 // Start creates or returns the existing replicated store with the included parameters.
 func Start(arguments ...Argument) error {
 	args := &Arguments{port: DefaultReplPort, name: "NA", join: make([]string, 0), dataDirectory: ""}
+	cache, _ = lru.NewWithEvict(300, evicted)
 
 	for _, a := range arguments {
 		a(args)

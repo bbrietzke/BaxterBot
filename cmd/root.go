@@ -51,7 +51,7 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		terminateChannel = make(chan error, 5)
 
-		go deleteStoreStart(terminateChannel, storeFlagParse(cmd, args)...)
+		go delegateStoreStart(terminateChannel, storeFlagParse(cmd, args)...)
 
 		select {
 		case err := <-terminateChannel:
@@ -60,7 +60,7 @@ to quickly create a Cobra application.`,
 	},
 }
 
-func deleteStoreStart(stop chan error, options ...store.Argument) {
+func delegateStoreStart(stop chan error, options ...store.Argument) {
 	if err := store.Start(options...); err != nil {
 		stop <- err
 	}

@@ -131,14 +131,6 @@
   version = "v1.8.0"
 
 [[projects]]
-  digest = "1:78bbb1ba5b7c3f2ed0ea1eab57bdd3859aec7e177811563edc41198a760b06af"
-  name = "github.com/mitchellh/go-homedir"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "ae18d6b8b3205b561c79e8e5f69bff09736185f4"
-  version = "v1.0.0"
-
-[[projects]]
   digest = "1:53bc4cd4914cd7cd52139990d5170d6dc99067ae31c56530621b18b35fc30318"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
@@ -270,7 +262,6 @@
     "github.com/hashicorp/golang-lru",
     "github.com/hashicorp/raft",
     "github.com/hashicorp/raft-boltdb",
-    "github.com/mitchellh/go-homedir",
     "github.com/pkg/errors",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
