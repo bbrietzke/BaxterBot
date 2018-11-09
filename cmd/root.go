@@ -28,12 +28,8 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strconv"
 
-	"github.com/bbrietzke/BaxterBot/pkg/swarm"
-
-	"github.com/bbrietzke/BaxterBot/pkg/web"
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/bbrietzke/BaxterBot/pkg/store"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -54,40 +50,8 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		terminateChannel = make(chan error, 5)
-		webOptions := []web.Option{}
-		swarmOptions := []swarm.Option{}
 
-		if cmd.Flag("swarm").Changed {
-			swarmOptions = append(swarmOptions, swarm.Port(cmd.Flag("swarm").Value.String()))
-		}
-
-		if cmd.Flag("join").Changed {
-			swarmOptions = append(swarmOptions, swarm.Join(cmd.Flag("join").Value.String()))
-		}
-
-		if cmd.Flag("name").Changed {
-			swarmOptions = append(swarmOptions, swarm.Name(cmd.Flag("name").Value.String()))
-		}
-
-		if cmd.Flag("http").Changed {
-			v := cmd.Flag("http").Value.String()
-			webOptions = append(webOptions, web.Port(v))
-			swarmOptions = append(swarmOptions, swarm.HTTP(v))
-		}
-
-		if cmd.Flag("rps").Changed {
-			v, _ := strconv.ParseInt(cmd.Flag("rps").Value.String(), 10, 64)
-			webOptions = append(webOptions, web.RequestsPerSecond(v))
-		}
-
-		if cmd.Flag("wait").Changed {
-			if v, _ := strconv.ParseBool(cmd.Flag("wait").Value.String()); v {
-				webOptions = append(webOptions, web.Wait())
-			}
-		}
-
-		go delegateSwarmStart(terminateChannel, swarmOptions...)
-		go delegateWebStart(terminateChannel, webOptions...)
+		go deleteStoreStart(terminateChannel, storeFlagParse(cmd, args)...)
 
 		select {
 		case err := <-terminateChannel:
@@ -96,12 +60,8 @@ to quickly create a Cobra application.`,
 	},
 }
 
-func delegateWebStart(stop chan error, options ...web.Option) {
-	stop <- web.Start(options...)
-}
-
-func delegateSwarmStart(stop chan error, options ...swarm.Option) {
-	if err := swarm.Start(options...); err != nil {
+func deleteStoreStart(stop chan error, options ...store.Argument) {
+	if err := store.Start(options...); err != nil {
 		stop <- err
 	}
 }
@@ -117,13 +77,13 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.baxter_bot.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is /etc/baxter.yml)")
 	rootCmd.PersistentFlags().Bool("wait", false, "use wait protocol for rate limiting")
 	rootCmd.PersistentFlags().Int64("rps", 0, "requests per second")
-	rootCmd.PersistentFlags().String("swarm", ":21000", "port to host the swarm on")
+	rootCmd.PersistentFlags().String("repl", store.DefaultReplPort, "port to host the swarm on")
 	rootCmd.PersistentFlags().String("http", ":8080", "port to host the http server on")
 	rootCmd.PersistentFlags().String("name", "", "name to take as part of the swarm")
-	rootCmd.PersistentFlags().String("join", "", "swarm host to join to")
+	rootCmd.PersistentFlags().StringArray("join", []string{}, "one or more hosts to replicate with")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -131,14 +91,11 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".baxter_bot")
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("/etc/")
+		viper.SetConfigName("baxter")
 	}
+	viper.SetEnvPrefix("bot")
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
