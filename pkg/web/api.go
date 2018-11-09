@@ -1,8 +1,13 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
+
+	"github.com/bbrietzke/BaxterBot/pkg/protocol"
+
+	"github.com/bbrietzke/BaxterBot/pkg/swarm"
 
 	"github.com/gorilla/mux"
 )
@@ -39,6 +44,7 @@ func createStoreValueJSON() (string, http.HandlerFunc) {
 		}
 
 		cache.Add(v["key"], t)
+		swarm.CreateKeyValueEntry(v["key"], t)
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -48,5 +54,19 @@ func deleteStoreValueJSON() (string, http.HandlerFunc) {
 		v := mux.Vars(r)
 		cache.Remove(v["key"])
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func pipelineProcessor(p <-chan interface{}) {
+	for msg := range p {
+		switch v := msg.(type) {
+		case protocol.KeyValueCreate:
+			d := json.NewDecoder(bytes.NewReader(v.GetKeyedValue()))
+			var t interface{}
+			d.Decode(&t)
+			cache.Add(v.GetKey(), t)
+		case protocol.KeyValueDelete:
+			cache.Remove(v.GetKey())
+		}
 	}
 }

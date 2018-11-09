@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/bbrietzke/BaxterBot/pkg/swarm"
+
 	"golang.org/x/time/rate"
 
 	"github.com/hashicorp/golang-lru"
@@ -27,7 +29,7 @@ var (
 )
 
 func init() {
-	logger = log.New(os.Stdout, "WEB  ", log.LstdFlags|log.Lshortfile)
+	logger = log.New(os.Stdout, "WEB   ", log.LstdFlags|log.Lshortfile)
 	cache, _ = lru.New(defaultCacheSize)
 	limiter = rate.NewLimiter(rate.Limit(1), burstRate)
 }
@@ -42,12 +44,12 @@ Options that can be included are:
 	RequestsPerSecond
 		Sets the rate limiter to only allow a set amount of HTTP requests per second.
 		Automatically sets the Burst to be 10% of the RequestsPerSecond value.
-	Burst
-		Maximum number of incoming requests before rate limiting begins.
+	Wait
+		Uses the rate.Limiter Wait protocol instead of Allow.
 */
 func Start(options ...Option) error {
 	router := mux.NewRouter()
-	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Burst: burstRate, Wait: allowLimitsMW}
+	args := &Options{Port: defaultHTTPPort, RequestPerSecond: requestsPerSeconds, Wait: allowLimitsMW}
 
 	for _, o := range options {
 		o(args)
@@ -59,6 +61,8 @@ func Start(options ...Option) error {
 	router.Use(loggingMW)
 
 	constructAPI(router.PathPrefix("/api").Headers("Content-Type", "application/json").Subrouter())
+	swarm.SetupHTTP(router.PathPrefix("/swarm").Subrouter())
+	go pipelineProcessor(swarm.Pipeline())
 
 	srv := &http.Server{
 		Handler:      router,

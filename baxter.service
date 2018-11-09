@@ -1,0 +1,13 @@
+[Unit]
+Description=Baxter Bot
+After=network.target
+
+[Service]
+ExecStart=/opt/bot/bin/BaxterBot
+WorkingDirectory=/opt/bot/
+StandardOutput=inherit
+StandardError=inherit
+User=pi
+
+[Install]
+WantedBy=multi-user.target

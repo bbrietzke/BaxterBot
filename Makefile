@@ -3,7 +3,13 @@
 run: dependencies test
 	$(GO_RUN) main.go
 
-dependencies: Gopkg.toml
+run2: dependencies test
+	$(GO_RUN) main.go --swarm 22000 --http 22080 --join localhost:8080/swarm
+
+run3: dependencies test
+	$(GO_RUN) main.go --swarm 23000 --http 23080 --join localhost:8080/swarm
+
+dependencies: Gopkg.toml commands
 	$(DEP) ensure -v
 
 clean:
@@ -21,10 +27,10 @@ $(DEP):
 Gopkg.toml: $(DEP)
 	$(DEP) init
 
-swarm: pkg/swarm/swarm.pb.go
+pkg/protocol/commands.pb.go: pkg/protocol/commands.proto
+	PATH=$(TPATH) $(PROTOC) -I/usr/local/include -I. -I$(GOPATH)/src -I pkg/protocol/ --go_out=pkg/protocol/. commands.proto
 
-pkg/swarm/swarm.pb.go:
-	PATH=$(TPATH) $(PROTOC) -I/usr/local/include -I. -I$(GOPATH)/src -I proto/ swarm.proto --go_out=plugins=grpc:pkg/swarm
+commands: pkg/protocol/commands.pb.go
 
 test:
 	@echo "Test something here"
