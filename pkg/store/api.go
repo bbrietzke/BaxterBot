@@ -29,8 +29,6 @@ func Add(key string, value interface{}) error {
 	if f := repl.Apply(v, defaultTimeOut).Error(); f != nil {
 		return errors.Wrap(f, "Apply")
 	}
-
-	cache.Add(key, value)
 	return nil
 }
 
@@ -48,6 +46,5 @@ func Delete(key string) error {
 	if f := repl.Apply(v, defaultTimeOut).Error(); f != nil {
 		return errors.Wrap(f, "Apply")
 	}
-	cache.Remove(key)
 	return nil
 }

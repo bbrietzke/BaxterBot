@@ -3,6 +3,8 @@ package store
 import (
 	"io"
 
+	"github.com/bbrietzke/BaxterBot/pkg/protocol"
+	"github.com/golang/protobuf/proto"
 	"github.com/hashicorp/raft"
 	"github.com/pkg/errors"
 )
@@ -15,6 +17,16 @@ type stateMachine struct {
 }
 
 func (fsm *stateMachine) Apply(l *raft.Log) interface{} {
+	wrapper := &protocol.CommandWrapper{}
+	proto.Unmarshal(l.Data, wrapper)
+
+	switch wrapper.Type {
+	case protocol.CommandWrapper_KEY_VALUE_DELETE:
+	case protocol.CommandWrapper_KEY_VALUE_CREATE:
+	default:
+		logger.Println(wrapper.Type)
+	}
+
 	return nil
 }
 
