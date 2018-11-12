@@ -82,7 +82,7 @@ func init() {
 	rootCmd.PersistentFlags().Int64("rps", 0, "requests per second")
 	rootCmd.PersistentFlags().String("repl", store.DefaultReplPort, "port to host the swarm on")
 	rootCmd.PersistentFlags().String("http", ":8080", "port to host the http server on")
-	rootCmd.PersistentFlags().String("name", "", "name to take as part of the swarm")
+	rootCmd.PersistentFlags().String("name", "", "name to take as part of the replication cluster")
 	rootCmd.PersistentFlags().StringArray("join", []string{}, "one or more hosts to replicate with")
 }
 
@@ -91,8 +91,8 @@ func initConfig() {
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		viper.AddConfigPath(".")
 		viper.AddConfigPath("/etc/")
+		viper.AddConfigPath(".")
 		viper.SetConfigName("baxter")
 	}
 	viper.SetEnvPrefix("bot")

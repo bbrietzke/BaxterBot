@@ -5,7 +5,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
 
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb"
@@ -25,7 +24,7 @@ func outboundIP(port string) string {
 
 func raftConfig(args *Arguments) *raft.Config {
 	config := raft.DefaultConfig()
-	config.Logger = log.New(os.Stdout, "RAFT  ", log.LstdFlags)
+	config.Logger = log.New(os.Stdout, " RAFT ", log.LstdFlags)
 	config.LocalID = raft.ServerID(args.name)
 
 	return config
@@ -58,20 +57,6 @@ func snapStore(args *Arguments) raft.SnapshotStore {
 func leadershipChanges(channel <-chan bool) {
 	for m := range channel {
 		isCurrentLeader = m
-	}
-}
-
-func bootstrapOrJoin(args *Arguments, myAddr raft.ServerAddress) {
-	time.Sleep(defaultTimeOut)
-	if c := repl.GetConfiguration(); c.Error() == nil {
-		if len(c.Configuration().Servers) == 0 && len(args.join) == 0 {
-			logger.Println("* * * * * * * * * * BOOTSTRAPPING * * * * * * * * * * ")
-			if err := repl.BootstrapCluster(raft.Configuration{Servers: []raft.Server{{ID: raft.ServerID(args.name), Address: myAddr}}}).Error(); err != nil {
-				logger.Fatalln(err)
-			}
-		} else if len(args.join) > 0 {
-			logger.Println("Should connect to a different server here")
-		}
 	}
 }
 
